@@ -42,97 +42,39 @@ MER_CLIP_code/
 ### Prerequisites
 
 - Linux (tested on Ubuntu)
-- NVIDIA GPU with CUDA support
+- Python 3.8
+- NVIDIA GPU with CUDA 11.6
 - Conda (Miniconda or Anaconda)
 
-### Tested Environment
-
-| Component   | Version           |
-|-------------|-------------------|
-| Python      | 3.8               |
-| CUDA        | 11.6              |
-| cuDNN       | 8.3               |
-| PyTorch     | 1.12.1            |
-| torchvision | 0.13.1            |
-| mmcv        | 2.0.0             |
-| mmengine    | 0.10.4            |
-| CLIP        | 1.0 (OpenAI)      |
-
-### Key Dependencies
-
-| Package         | Version     | Purpose                          |
-|-----------------|-------------|----------------------------------|
-| torch           | 1.12.1      | Deep learning framework          |
-| torchvision     | 0.13.1      | Vision transforms & models       |
-| mmcv            | 2.0.0       | OpenMMLab computer vision        |
-| mmengine        | 0.10.4      | OpenMMLab training engine        |
-| clip            | 1.0         | OpenAI CLIP text/vision encoder  |
-| ftfy            | 6.2.0       | Text cleaning (CLIP dependency)  |
-| pytorchvideo    | 0.1.5       | Video augmentations              |
-| decord          | 0.6.0       | Fast video decoding              |
-| timm            | 0.4.12      | Vision model components          |
-| einops          | 0.8.0       | Tensor operations                |
-| scikit-learn    | 1.3.2       | Evaluation metrics               |
-| pandas          | 2.0.3       | Data processing                  |
-| matplotlib      | 3.7.5       | Visualization                    |
-| seaborn         | 0.13.2      | Statistical visualization        |
-| opencv-python   | 4.10.0.82   | Image I/O & processing           |
-| numpy           | 1.24.4      | Numerical computing              |
-| pillow          | 10.4.0      | Image processing                 |
-| scipy           | 1.10.1      | Scientific computing             |
-| matplotlib      | 3.7.5       | Visualization                    |
-
-### Installation (Step-by-Step)
-
-**Step 1: Create conda environment**
+### Installation
 
 ```shell
+# Step 1: Create conda environment
 conda create --name merclip python=3.8 -y
 conda activate merclip
-```
 
-**Step 2: Install PyTorch (CUDA 11.6)**
-
-```shell
+# Step 2: Install PyTorch (CUDA 11.6)
 pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 torchaudio==0.12.1 \
     --extra-index-url https://download.pytorch.org/whl/cu116
-```
 
-> For other CUDA versions, refer to [PyTorch Previous Versions](https://pytorch.org/get-started/previous-versions/).
-
-**Step 3: Install OpenMMLab dependencies**
-
-```shell
+# Step 3: Install OpenMMLab dependencies
 pip install openmim==0.3.9
 mim install mmengine==0.10.4
 mim install mmcv==2.0.0
-```
 
-**Step 4: Install CLIP**
-
-```shell
+# Step 4: Install CLIP
 pip install git+https://github.com/openai/CLIP.git
-```
 
-**Step 5: Install remaining dependencies**
+# Step 5: Install remaining dependencies
+pip install ftfy regex pytorchvideo decord timm einops \
+    scikit-learn pandas seaborn opencv-python numpy pillow scipy matplotlib
 
-```shell
-pip install ftfy==6.2.0 regex==2024.5.15 \
-    pytorchvideo==0.1.5 decord==0.6.0 \
-    timm==0.4.12 einops==0.8.0 \
-    scikit-learn==1.3.2 pandas==2.0.3 \
-    seaborn==0.13.2 \
-    opencv-python==4.10.0.82 \
-    numpy==1.24.4 pillow==10.4.0 \
-    scipy==1.10.1 matplotlib==3.7.5
-```
-
-**Step 6: Install this project (editable mode)**
-
-```shell
+# Step 6: Install this project (editable mode)
 cd MER_CLIP_code
 pip install -v -e .
 ```
+
+> For other CUDA versions, refer to [PyTorch Previous Versions](https://pytorch.org/get-started/previous-versions/). The full pinned dependency versions are available in `requirements_merclip.txt`.
 
 ### Quick Verification
 
