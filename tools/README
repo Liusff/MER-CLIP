@@ -233,4 +233,4 @@ If you find this work useful, please cite:
 
 ## Acknowledgement
 
-This project is built upon [MMAction2](https://github.com/open-mmlab/mmaction2) and [ActionCLIP](https://github.com/sallymmx/ActionCLIP). We thank the authors for their excellent work.
+This project is built upon [MMAction2](https://github.com/open-mmlab/mmaction2) and [ActionCLIP](https://github.com/sallymmx/ActionCLIP). We use pretrained weights from [UniFormerV2](https://github.com/OpenGVLab/UniFormerV2) and [ViCLIP](https://github.com/OpenGVLab/InternVideo/tree/main/Data/InternVid). We thank the authors for their excellent work.
