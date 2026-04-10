@@ -17,7 +17,7 @@ Micro-expressions (MEs) are fleeting and subtle facial movements revealing genui
 
 ```
 MER_CLIP_code/
-├── projects/actionclip/          # Core MER-CLIP implementation
+├── projects/merclip/          # Core MER-CLIP implementation
 │   ├── models/                   #   Model definitions
 │   │   ├── uf2_clip_clshead_dfme.py   # Main model: ActionClip_MA_WithCls_ME
 │   │   ├── clip/                 #   CLIP encoders (text & vision)
@@ -176,14 +176,14 @@ Each dataset should be organized as raw frames under `data_root` specified in th
 
 ```shell
 cd tools
-bash dist_train.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS>
+bash dist_train.sh ../projects/merclip/configs/<CONFIG>.py <NUM_GPUS>
 ```
 
 **For datasets with LOSO** (e.g., CASME series, SAMM):
 
 ```shell
 cd tools
-bash dist_loso_train.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS> <DATASET>
+bash dist_loso_train.sh ../projects/merclip/configs/<CONFIG>.py <NUM_GPUS> <DATASET>
 # <DATASET>: casme2, casme3, samm
 ```
 
@@ -191,30 +191,30 @@ bash dist_loso_train.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS> <D
 
 ```shell
 # DFME (CCAC competition), 2 GPUs
-bash dist_train.sh ../projects/actionclip/configs/uf2_progres_clip+transformer_clshead_dfme_ccac.py 2
+bash dist_train.sh ../projects/merclip/configs/uf2_progres_clip+transformer_clshead_dfme_ccac.py 2
 
 # CAS(ME)² with DFME pre-training, 2 GPUs
-bash dist_loso_train.sh ../projects/actionclip/configs/uf2_progres_clip+transformer_aug_clshead_casme2_dfme-pre.py 2 casme2
+bash dist_loso_train.sh ../projects/merclip/configs/uf2_progres_clip+transformer_aug_clshead_casme2_dfme-pre.py 2 casme2
 
 # SAMM with DFME pre-training, 2 GPUs
-bash dist_loso_train.sh ../projects/actionclip/configs/uf2_progres_clip+transformer_aug_clshead_samm_dfme-pre.py 2 samm
+bash dist_loso_train.sh ../projects/merclip/configs/uf2_progres_clip+transformer_aug_clshead_samm_dfme-pre.py 2 samm
 ```
 
 ### Single GPU Training
 
 ```shell
 cd tools
-CUDA_VISIBLE_DEVICES=0 python train.py ../projects/actionclip/configs/<CONFIG>.py
+CUDA_VISIBLE_DEVICES=0 python train.py ../projects/merclip/configs/<CONFIG>.py
 ```
 
 ## Testing
 
 ```shell
 # Standard test
-bash dist_test.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS>
+bash dist_test.sh ../projects/merclip/configs/<CONFIG>.py <NUM_GPUS>
 
 # LOSO test
-bash dist_loso_test.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS> <DATASET>
+bash dist_loso_test.sh ../projects/merclip/configs/<CONFIG>.py <NUM_GPUS> <DATASET>
 ```
 
 ## Citation
