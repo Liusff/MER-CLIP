@@ -1,186 +1,236 @@
-# ActionCLIP Project
+# MER-CLIP: AU-Guided Vision-Language Alignment for Micro-Expression Recognition
 
-[ActionCLIP: A New Paradigm for Video Action Recognition](https://arxiv.org/abs/2109.08472)
+This is the official implementation of:
 
-<!-- [ALGORITHM] -->
+> **MER-CLIP: AU-Guided Vision-Language Alignment for Micro-Expression Recognition**
+>
+> Shifeng Liu, Xinglong Mao, Sirui Zhao*, Peiming Li, Tong Xu, Enhong Chen*
+>
+> *IEEE Transactions on Affective Computing, 2025*
 
-## Abstract
 
-<!-- [ABSTRACT] -->
+## Introduction
 
-The canonical approach to video action recognition dictates a neural model to do a classic and standard 1-of-N majority vote task. They are trained to predict a fixed set of predefined categories, limiting their transferable ability on new datasets with unseen concepts. In this paper, we provide a new perspective on action recognition by attaching importance to the semantic information of label texts rather than simply mapping them into numbers. Specifically, we model this task as a video-text matching problem within a multimodal learning framework, which strengthens the video representation with more semantic language supervision and enables our model to do zero-shot action recognition without any further labeled data or parameters requirements. Moreover, to handle the deficiency of label texts and make use of tremendous web data, we propose a new paradigm based on this multimodal learning framework for action recognition, which we dub "pre-train, prompt and fine-tune". This paradigm first learns powerful representations from pre-training on a large amount of web image-text or video-text data. Then it makes the action recognition task to act more like pre-training problems via prompt engineering. Finally, it end-to-end fine-tunes on target datasets to obtain strong performance. We give an instantiation of the new paradigm, ActionCLIP, which not only has superior and flexible zero-shot/few-shot transfer ability but also reaches a top performance on general action recognition task, achieving 83.8% top-1 accuracy on Kinetics-400 with a ViT-B/16 as the backbone.
+Micro-expressions (MEs) are fleeting and subtle facial movements revealing genuine emotions, with important applications in criminal investigation and psychological diagnosis. MER-CLIP integrates the CLIP model's powerful cross-modal semantic alignment capability into micro-expression recognition (MER). Specifically, we convert AU (Action Unit) labels into detailed textual descriptions of facial muscle movements, guiding fine-grained spatiotemporal ME learning by aligning visual dynamics with AU-based textual representations. We also introduce an Emotion Reasoning Module to capture the nuanced relationship between ME patterns and emotions. To mitigate overfitting caused by scarce ME data, we propose LocalStaticFaceMix, an effective data augmentation strategy that enhances facial diversity while preserving key ME features.
 
-<!-- [IMAGE] -->
+## Project Structure
 
-<div align=center>
-<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/58767402/237413093-75d76018-0521-4642-af68-32141fb4fed1.png" width="800"/>
-</div>
+```
+MER_CLIP_code/
+├── projects/actionclip/          # Core MER-CLIP implementation
+│   ├── models/                   #   Model definitions
+│   │   ├── uf2_clip_clshead_dfme.py   # Main model: ActionClip_MA_WithCls_ME
+│   │   ├── clip/                 #   CLIP encoders (text & vision)
+│   │   └── ...
+│   ├── configs/                  #   Experiment configs (DFME/CASME/SAMM)
+│   └── utils/                    #   Training utilities
+├── data/                         # Dataset annotations (DFME/CASME2/CASME3/SAMM)
+├── tools/                        # Training & testing scripts
+├── configs/                      # Baseline configs (UniFormerV2 w/o CLIP)
+├── mmaction/                     # Modified mmaction2 framework
+│   ├── datasets/                 #   Custom ME datasets & transforms
+│   ├── models/                   #   Custom backbones, heads, losses, data_preprocessors
+│   ├── evaluation/               #   MEMetric (UF1, UAR)
+│   └── engine/                   #   WithEpochBasedTrainLoop
+├── resources/                    # Pretrained backbone weights
+├── requirements_merclip.txt      # Pinned dependency versions
+└── setup.py
+```
 
-## Usage
+## Environment Setup
 
-### Setup Environment
+### Prerequisites
 
-Please refer to [Installation](https://mmaction2.readthedocs.io/en/latest/get_started/installation.html) to install MMAction2. Run the following command to install `clip`.
+- Linux (tested on Ubuntu)
+- NVIDIA GPU with CUDA support
+- Conda (Miniconda or Anaconda)
+
+### Tested Environment
+
+| Component   | Version           |
+|-------------|-------------------|
+| Python      | 3.8               |
+| CUDA        | 11.6              |
+| cuDNN       | 8.3               |
+| PyTorch     | 1.12.1            |
+| torchvision | 0.13.1            |
+| mmcv        | 2.0.0             |
+| mmengine    | 0.10.4            |
+| CLIP        | 1.0 (OpenAI)      |
+
+### Key Dependencies
+
+| Package         | Version     | Purpose                          |
+|-----------------|-------------|----------------------------------|
+| torch           | 1.12.1      | Deep learning framework          |
+| torchvision     | 0.13.1      | Vision transforms & models       |
+| mmcv            | 2.0.0       | OpenMMLab computer vision        |
+| mmengine        | 0.10.4      | OpenMMLab training engine        |
+| clip            | 1.0         | OpenAI CLIP text/vision encoder  |
+| ftfy            | 6.2.0       | Text cleaning (CLIP dependency)  |
+| pytorchvideo    | 0.1.5       | Video augmentations              |
+| decord          | 0.6.0       | Fast video decoding              |
+| timm            | 0.4.12      | Vision model components          |
+| einops          | 0.8.0       | Tensor operations                |
+| scikit-learn    | 1.3.2       | Evaluation metrics               |
+| pandas          | 2.0.3       | Data processing                  |
+| matplotlib      | 3.7.5       | Visualization                    |
+| seaborn         | 0.13.2      | Statistical visualization        |
+| opencv-python   | 4.10.0.82   | Image I/O & processing           |
+| numpy           | 1.24.4      | Numerical computing              |
+| pillow          | 10.4.0      | Image processing                 |
+| scipy           | 1.10.1      | Scientific computing             |
+| matplotlib      | 3.7.5       | Visualization                    |
+
+### Installation (Step-by-Step)
+
+**Step 1: Create conda environment**
+
+```shell
+conda create --name merclip python=3.8 -y
+conda activate merclip
+```
+
+**Step 2: Install PyTorch (CUDA 11.6)**
+
+```shell
+pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 torchaudio==0.12.1 \
+    --extra-index-url https://download.pytorch.org/whl/cu116
+```
+
+> For other CUDA versions, refer to [PyTorch Previous Versions](https://pytorch.org/get-started/previous-versions/).
+
+**Step 3: Install OpenMMLab dependencies**
+
+```shell
+pip install openmim==0.3.9
+mim install mmengine==0.10.4
+mim install mmcv==2.0.0
+```
+
+**Step 4: Install CLIP**
 
 ```shell
 pip install git+https://github.com/openai/CLIP.git
 ```
 
-Assume that you are located at `$MMACTION2/projects/actionclip`.
-
-Add the current folder to `PYTHONPATH`, so that Python can find your code. Run the following command in the current directory to add it.
-
-> Please run it every time after you opened a new shell.
+**Step 5: Install remaining dependencies**
 
 ```shell
-export PYTHONPATH=`pwd`:$PYTHONPATH
+pip install ftfy==6.2.0 regex==2024.5.15 \
+    pytorchvideo==0.1.5 decord==0.6.0 \
+    timm==0.4.12 einops==0.8.0 \
+    scikit-learn==1.3.2 pandas==2.0.3 \
+    seaborn==0.13.2 \
+    opencv-python==4.10.0.82 \
+    numpy==1.24.4 pillow==10.4.0 \
+    scipy==1.10.1 matplotlib==3.7.5
 ```
 
-### Data Preparation
-
-Prepare the Kinetics400 dataset according to the [instruction](https://github.com/open-mmlab/mmaction2/blob/main/tools/data/kinetics/README.md).
-
-Create a symbolic link from `$MMACTION2/data` to `./data` in the current directory, so that Python can locate your data. Run the following command in the current directory to create the symbolic link.
+**Step 6: Install this project (editable mode)**
 
 ```shell
-ln -s ../../data ./data
+cd MER_CLIP_code
+pip install -v -e .
 ```
 
-### Training commands
+### Quick Verification
 
-**To train with single GPU:**
-
-```bash
-mim train mmaction configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py
+```shell
+python -c "
+import torch, mmcv, mmengine, clip
+print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}')
+print(f'mmcv: {mmcv.__version__}, mmengine: {mmengine.__version__}')
+print('CLIP: OK')
+import mmaction; print(f'mmaction2: {mmaction.__version__} ({mmaction.__file__})')
+"
 ```
 
-**To train with multiple GPUs:**
+Expected output should show all versions and `mmaction2` pointing to your local `MER_CLIP_code/mmaction/`.
 
-```bash
-mim train mmaction configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py --launcher pytorch --gpus 8
+## Pretrained Weights
+
+Place the following pretrained weights under `resources/`:
+
+| File                                  | Description                          |
+|---------------------------------------|--------------------------------------|
+| `sthv2_uniformerv2_b16_32x224.pyth`  | UniFormerV2 backbone (SthV2 pretrain)|
+| `ViCLIP-B_InternVid-FLT-10M.pth`    | ViCLIP text encoder weights          |
+
+## Supported Datasets
+
+| Dataset   | Classes | Validation | Config Example |
+|-----------|---------|------------|----------------|
+| DFME      | 7       | Hold-out   | `uf2_progres_clip+transformer_clshead_dfme_ccac.py` |
+| CAS(ME)²  | 3/5     | LOSO       | `uf2_progres_clip+transformer_aug_clshead_casme2_dfme-pre.py` |
+| CAS(ME)³  | 3/4/7   | LOSO       | `uf2_progres_clip+transformer_aug_clshead_casme3.py` |
+| SAMM      | 3/5     | LOSO       | `uf2_progres_clip+transformer_aug_clshead_samm_dfme-pre.py` |
+
+### Dataset Preparation
+
+Each dataset should be organized as raw frames under `data_root` specified in the config file. Annotation files are provided under `data/`.
+
+## Training
+
+**For datasets without LOSO** (e.g., DFME):
+
+```shell
+cd tools
+bash dist_train.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS>
 ```
 
-**To train with multiple GPUs by slurm:**
+**For datasets with LOSO** (e.g., CASME series, SAMM):
 
-```bash
-mim train mmaction configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py --launcher slurm \
-    --gpus 8 --gpus-per-node 8 --partition $PARTITION
+```shell
+cd tools
+bash dist_loso_train.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS> <DATASET>
+# <DATASET>: casme2, casme3, samm
 ```
 
-### Testing commands
+### Config Examples
 
-**To test with single GPU:**
+```shell
+# DFME (CCAC competition), 2 GPUs
+bash dist_train.sh ../projects/actionclip/configs/uf2_progres_clip+transformer_clshead_dfme_ccac.py 2
 
-```bash
-mim test mmaction configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py --checkpoint $CHECKPOINT
+# CAS(ME)² with DFME pre-training, 2 GPUs
+bash dist_loso_train.sh ../projects/actionclip/configs/uf2_progres_clip+transformer_aug_clshead_casme2_dfme-pre.py 2 casme2
+
+# SAMM with DFME pre-training, 2 GPUs
+bash dist_loso_train.sh ../projects/actionclip/configs/uf2_progres_clip+transformer_aug_clshead_samm_dfme-pre.py 2 samm
 ```
 
-**To test with multiple GPUs:**
+### Single GPU Training
 
-```bash
-mim test mmaction configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py --checkpoint $CHECKPOINT --launcher pytorch --gpus 8
+```shell
+cd tools
+CUDA_VISIBLE_DEVICES=0 python train.py ../projects/actionclip/configs/<CONFIG>.py
 ```
 
-**To test with multiple GPUs by slurm:**
+## Testing
 
-```bash
-mim test mmaction configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py --checkpoint $CHECKPOINT --launcher slurm \
-    --gpus 8 --gpus-per-node 8 --partition $PARTITION
-```
+```shell
+# Standard test
+bash dist_test.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS>
 
-## Results
-
-### Kinetics400
-
-| frame sampling strategy | backbone | top1 acc | top5 acc |  testing protocol  |                                config                                |                                ckpt                                 |
-| :---------------------: | :------: | :------: | :------: | :----------------: | :------------------------------------------------------------------: | :-----------------------------------------------------------------: |
-|          1x1x8          | ViT-B/32 |   77.6   |   93.8   | 8 clips  x 1 crop  | [config](./configs/actionclip_vit-base-p32-res224-clip-pre_1x1x8_k400-rgb.py) | [ckpt](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p32-res224-clip-pre_1x1x8_k400-rgb/vit-b-32-8f.pth)\[1\] |
-|          1x1x8          | ViT-B/16 |   80.3   |   95.2   | 8 clips  x 1 crop  | [config](./configs/actionclip_vit-base-p16-res224-clip-pre_1x1x8_k400-rgb.py) | [ckpt](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p16-res224-clip-pre_1x1x8_k400-rgb/vit-b-16-8f.pth)\[1\] |
-|         1x1x16          | ViT-B/16 |   81.1   |   95.6   | 16 clips  x 1 crop | [config](./configs/actionclip_vit-base-p16-res224-clip-pre_1x1x16_k400-rgb.py) | [ckpt](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p16-res224-clip-pre_1x1x16_k400-rgb/vit-b-16-16f.pth)\[1\] |
-|         1x1x32          | ViT-B/16 |   81.3   |   95.8   | 32 clips  x 1 crop | [config](./configs/actionclip_vit-base-p16-res224-clip-pre_1x1x32_k400-rgb.py) | [ckpt](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p16-res224-clip-pre_1x1x32_k400-rgb/vit-b-16-32f.pth)\[1\] |
-
-\[1\] The models are ported from the repo [ActionCLIP](https://github.com/sallymmx/ActionCLIP) and tested on our data. Currently, we only support the testing of ActionCLIP models. Due to the variation in testing data, our reported test accuracy differs from that of the original repository (on average, it is lower by one point). Please refer to this [issue](https://github.com/sallymmx/ActionCLIP/issues/14) for more details.
-
-### Kinetics400 (Trained on Our K400 dataset)
-
-| frame sampling strategy | gpus | backbone | top1 acc | top5 acc | testing protocol  |                    config                     |                     ckpt                     |                     log                     |
-| :---------------------: | :--: | :------: | :------: | :------: | :---------------: | :-------------------------------------------: | :------------------------------------------: | :-----------------------------------------: |
-|          1x1x8          |  8   | ViT-B/32 |   77.5   |   93.2   | 8 clips  x 1 crop | [config](./configs/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py) | [ckpt](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb_20230801-8535b794.pth) | [log](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb/actionclip_vit-base-p32-res224-clip-pre_g8xb16_1x1x8_k400-rgb.log) |
-|          1x1x8          |  8   | ViT-B/16 |   81.3   |   95.2   | 8 clips  x 1 crop | [config](./configs/actionclip_vit-base-p16-res224-clip-pre_g8xb16_1x1x8_k400-rgb.py) | [ckpt](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p16-res224-clip-pre_g8xb16_1x1x8_k400-rgb/actionclip_vit-base-p16-res224-clip-pre_g8xb16_1x1x8_k400-rgb_20230801-b307a0cd.pth) | [log](https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p16-res224-clip-pre_g8xb16_1x1x8_k400-rgb/actionclip_vit-base-p16-res224-clip-pre_g8xb16_1x1x8_k400-rgb.log) |
-
-## Zero-Shot Prediction
-
-We offer two methods for zero-shot prediction as follows. The `test.mp4` can be downloaded from [here](https://github-production-user-asset-6210df.s3.amazonaws.com/58767402/237333525-89ebee9a-573e-4e27-9047-0ad6422fa82f.mp4).
-
-### Using Naive Pytorch
-
-```python
-import torch
-import clip
-from models.load import init_actionclip
-from mmaction.utils import register_all_modules
-
-register_all_modules(True)
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = init_actionclip('ViT-B/32-8', device=device)
-
-video_anno = dict(filename='test.mp4', start_index=0)
-video = preprocess(video_anno).unsqueeze(0).to(device)
-
-template = 'The woman is {}'
-labels = ['singing', 'dancing', 'performing']
-text = clip.tokenize([template.format(label) for label in labels]).to(device)
-
-with torch.no_grad():
-    video_features = model.encode_video(video)
-    text_features = model.encode_text(text)
-
-video_features /= video_features.norm(dim=-1, keepdim=True)
-text_features /= text_features.norm(dim=-1, keepdim=True)
-similarity = (100 * video_features @ text_features.T).softmax(dim=-1)
-probs = similarity.cpu().numpy()
-
-print("Label probs:", probs)  # [[9.995e-01 5.364e-07 6.666e-04]]
-```
-
-### Using MMAction2 APIs
-
-```python
-import mmengine
-import torch
-from mmaction.utils import register_all_modules
-from mmaction.apis import inference_recognizer, init_recognizer
-
-register_all_modules(True)
-
-config_path = 'configs/actionclip_vit-base-p32-res224-clip-pre_1x1x8_k400-rgb.py'
-checkpoint_path = 'https://download.openmmlab.com/mmaction/v1.0/projects/actionclip/actionclip_vit-base-p32-res224-clip-pre_1x1x8_k400-rgb/vit-b-32-8f.pth'
-template = 'The woman is {}'
-labels = ['singing', 'dancing', 'performing']
-
-# Update the labels, the default is the label list of K400.
-config = mmengine.Config.fromfile(config_path)
-config.model.labels_or_label_file = labels
-config.model.template = template
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = init_recognizer(config=config, checkpoint=checkpoint_path, device=device)
-
-pred_result = inference_recognizer(model, 'test.mp4')
-probs = pred_result.pred_score.cpu().numpy()
-print("Label probs:", probs)  # [9.995e-01 5.364e-07 6.666e-04]
+# LOSO test
+bash dist_loso_test.sh ../projects/actionclip/configs/<CONFIG>.py <NUM_GPUS> <DATASET>
 ```
 
 ## Citation
 
-<!-- Replace to the citation of the paper your project refers to. -->
+If you find this work useful, please cite:
 
 ```bibtex
-@article{wang2021actionclip,
-  title={Actionclip: A new paradigm for video action recognition},
-  author={Wang, Mengmeng and Xing, Jiazheng and Liu, Yong},
-  journal={arXiv preprint arXiv:2109.08472},
-  year={2021}
+@article{liu2025merclip,
+  title={MER-CLIP: AU-Guided Vision-Language Alignment for Micro-Expression Recognition},
+  author={Liu, Shifeng and Mao, Xinglong and Zhao, Sirui and Li, Peiming and Xu, Tong and Chen, Enhong},
+  journal={IEEE Transactions on Affective Computing},
+  year={2025},
+  doi={10.1109/TAFFC.2025.3572931}
 }
 ```
+
+## Acknowledgement
+
+This project is built upon [MMAction2](https://github.com/open-mmlab/mmaction2) and [ActionCLIP](https://github.com/sallymmx/ActionCLIP). We use pretrained weights from [UniFormerV2](https://github.com/OpenGVLab/UniFormerV2) and [ViCLIP](https://github.com/OpenGVLab/InternVideo/tree/main/Data/InternVid). We thank the authors for their excellent work.
